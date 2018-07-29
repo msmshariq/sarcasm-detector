@@ -10,7 +10,7 @@ import pandas as pd
 import logging as log
 
 class TopicExtractor:
-
+    
     spotlight_endpoint = 'http://localhost/rest/annotate'
     log.getLogger().setLevel(log.INFO)
     
@@ -30,16 +30,15 @@ class TopicExtractor:
                                    confidence = self.confidence, filters = self.filter)
             except:
                 sys.exc_clear()
-            else :
+            else:
                 counter += 1
                 if (counter % 1000 == 0):
                     log.info("Collected {0} matching records".format(counter))
                     filtered_data = filtered_data.append({
-                        'label': row['label'],
-                        'comment': row['comment'],
-                        'parent_comment': row['parent_comment']
-                      },
-                      ignore_index = True)
+                            'label': row['label'],
+                            'comment': row['comment'],
+                            'parent_comment': row['parent_comment']},
+                    ignore_index = True)
         return filtered_data
 
 
