@@ -42,23 +42,23 @@ class TopicExtractor:
         return filtered_data
 
 
-input = pd.read_csv("/home/shariq/MSc/Research/dataset/reddit/pol/train-balanced.csv", sep='\t',
-                    names = ["label", "comment", "auth", "subreddit", "score", "ups", "downs", 
-                             "date", "created_utc", "parent_comment"])     
-        
-
-    
-politics_filter = {'types' : "DBpedia:Politician," +
-                   "DBpedia:PoliticalParty," +
-                   "DBpedia:OfficeHolder," +
-                   "DBpedia:PoliticalParty," +
-                   "DBpedia:GovernmentAgency"}
-
-
-col_names=["label", "comment", "parent_comment"]
-
-politcs_extract = TopicExtractor(filter=politics_filter, columns=col_names)
-
-type(politcs_extract)
-
-mydata = politcs_extract.filter_dataset(input)
+#input = pd.read_csv("/home/shariq/MSc/Research/dataset/reddit/pol/train-balanced.csv", sep='\t',
+#                    names = ["label", "comment", "auth", "subreddit", "score", "ups", "downs", 
+#                             "date", "created_utc", "parent_comment"])     
+#        
+#
+#    
+#politics_filter = {'types' : "DBpedia:Politician," +
+#                   "DBpedia:PoliticalParty," +
+#                   "DBpedia:OfficeHolder," +
+#                   "DBpedia:PoliticalParty," +
+#                   "DBpedia:GovernmentAgency"}
+#
+#
+#col_names=["label", "comment", "parent_comment"]
+#
+#politcs_extract = TopicExtractor(filter=politics_filter, columns=col_names)
+#
+#type(politcs_extract)
+#
+#mydata = politcs_extract.filter_dataset(input)
