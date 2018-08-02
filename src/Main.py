@@ -5,6 +5,15 @@ Created on Tue Jul 31 12:42:52 2018
 
 @author: shariq
 """
+import numpy as np
+np.random.seed(2018)
+
+from tensorflow import set_random_seed
+set_random_seed(2018)
+
+import random as rn
+rn.seed(2018) 
+
 
 import TopicExtractor
 import Utils
