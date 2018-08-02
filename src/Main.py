@@ -19,13 +19,12 @@ import TopicExtractor
 import Utils
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split
 from keras.models import Model
 from keras.layers import Embedding, Dense, Input, LSTM, Bidirectional, Activation
 from keras.layers.merge import concatenate
 from keras.optimizers import SGD, Adam
 from keras.models import Sequential
-from keras.wrappers.scikit_learn import KerasClassifier
 
 def load_raw_dataset(file_path):
     all_columns = ["label", "comment", "auth", "subreddit", "score", "ups", 
@@ -94,26 +93,12 @@ def main():
     embedding_matrix = Utils.create_embeddings(vocab_size, tok)
     x_train, x_test, y_train, y_test = train_test_split(d, y, test_size=0.2, random_state=0)
 
+    #model = base_model(vocab_size, embedding_matrix, max_len)
+    model = base_model()
+    model.fit(x_train, y_train, epochs=5, batch_size=32)
+    loss, accuracy = model.evaluate(x_test, y_test)
+    print('Accuracy: %f' % (accuracy*100))
     
-#    model = base_model(vocab_size, embedding_matrix, max_len)
-#    model.fit(x_train, y_train, epochs=5, batch_size=32)
-#    loss, accuracy = model.evaluate(x_test, y_test)
-#    print('Accuracy: %f' % (accuracy*100))
-    
-    model = KerasClassifier(build_fn=base_model, verbose=1)
-    # define the grid search parameters
-    batch_size = [32, 64, 128, 256]
-    epochs = [5, 10, 15]
-    param_grid = dict(batch_size=batch_size, epochs=epochs)
-    grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)
-    grid_result = grid.fit(x_train, y_train)
-    # summarize results
-    print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
-    means = grid_result.cv_results_['mean_test_score']
-    stds = grid_result.cv_results_['std_test_score']
-    params = grid_result.cv_results_['params']
-    for mean, stdev, param in zip(means, stds, params):
-        print("%f (%f) with: %r" % (mean, stdev, param))
 
 if __name__ == "__main__":
     main()
