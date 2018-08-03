@@ -44,7 +44,7 @@ def encode_docs1(tokenizer, data, column):
     # find the max length of comments and parent comments
     max_len = len(max(encoded_comments, key=len))
     # pad the comments and parent comments using the max_length
-    padded_comments = pad_sequences(encoded_comments, maxlen=max_len, padding='post')
+    padded_comments = pad_sequences(encoded_comments, maxlen=max_len, padding='post', truncating='post')
     return max_len, padded_comments
  
 def init_glove_embedding():    

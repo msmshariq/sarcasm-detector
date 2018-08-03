@@ -23,8 +23,9 @@ from sklearn.model_selection import train_test_split
 from keras.models import Model
 from keras.layers import Embedding, Dense, Input, LSTM, Bidirectional, Activation
 from keras.layers.merge import concatenate
-from keras.optimizers import SGD, Adam
+from keras.optimizers import SGD, Adam, TFOptimizer
 from keras.models import Sequential
+import tensorflow as tf
 
 def load_raw_dataset(file_path):
     all_columns = ["label", "comment", "auth", "subreddit", "score", "ups", 
@@ -63,6 +64,27 @@ def base_model():
 #    print(model.summary())
     return model 
 
+def multi_input_model(pr_len, comm_len):
+    input_parent = Input(shape=(pr_len,))
+    embedding1 = Embedding(vocab_size, 100, weights=[embedding_matrix], input_length=pr_len, trainable=False)(input_parent)
+    bilstm1 = Bidirectional(LSTM(10, return_sequences=True))(embedding1)
+#    dense1 = Dense(10, activation='sigmoid')(bilstm1)
+    
+    input_comment = Input(shape=(comm_len,))
+    embedding2 = Embedding(vocab_size, 100, weights=[embedding_matrix], input_length=comm_len, trainable=False)(input_comment)
+    bilstm2 = Bidirectional(LSTM(10, return_sequences=True))(embedding2)
+#    dense2 = Dense(10, activation='sigmoid')(bilstm2)
+        
+    x = concatenate([bilstm1, bilstm2], axis=1)
+    x = Dense(10, activation='sigmoid')(x)
+    x = Bidirectional(LSTM(10))(x)
+    output = Dense(1, activation='sigmoid')(x)
+    
+    model = Model(inputs=[input_parent, input_comment], outputs=[output])
+    model.compile(loss='binary_crossentropy', optimizer='adam', metrics = ['accuracy'])
+    print(model.summary())
+    return model
+
 #input_politics["comment"] = input_politics["comment"].apply(lambda x: Utils.cleanup_str(x))
 #input_politics["parent_comment"] = input_politics["parent_comment"].apply(lambda x: Utils.cleanup_str(x))
 
@@ -79,11 +101,16 @@ def base_model():
 vocab_size = 0
 max_len = 0 
 
-def main():
-    global vocab_size, max_len, tok, embedding_matrix
+def initz():
     input_politics = load_filtered_dataset("/home/shariq/MSc/Research/dataset/train-politics.csv")
     input_politics["all_comments"] = input_politics["parent_comment"].map(str) + " " + input_politics["comment"]
-    pick_col = "comment"
+    return input_politics
+
+def main():
+    global vocab_size, max_len, tok, embedding_matrix
+    
+    input_politics = initz()
+    pick_col = "all_comments"
     tok, vocab_size = Utils.init_tokenizer(input_politics[pick_col])
     max_len, d = Utils.encode_docs1(tok, input_politics, pick_col)
     y = np.array(input_politics["label"])
@@ -99,6 +126,31 @@ def main():
     loss, accuracy = model.evaluate(x_test, y_test)
     print('Accuracy: %f' % (accuracy*100))
     
+def multi_input():
+    global vocab_size, embedding_matrix
+    input_politics = initz()
+    pick_col = "all_comments"
+    tok, vocab_size = Utils.init_tokenizer(input_politics[pick_col])
+    
+    max_len_comm, en_comm = Utils.encode_docs1(tok, input_politics, "comment")
+    max_len_pr_comm, en_pr_comm = Utils.encode_docs1(tok, input_politics, "parent_comment")
+    
+    embedding_matrix = Utils.create_embeddings(vocab_size, tok)
+    
+    y = np.array(input_politics["label"])
+    x = np.concatenate((en_pr_comm, en_comm), axis=1)
+    
+    np.array_equal(en_pr_comm, x[:,:max_len_pr_comm])
+    np.array_equal(en_comm, x[:,max_len_pr_comm:max_len_pr_comm+max_len_comm])
+    
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
+    
+    multi_model = multi_input_model(max_len_pr_comm, max_len_comm)
+    multi_model.fit([x_train[:,:max_len_pr_comm], x_train[:,max_len_pr_comm:max_len_pr_comm+max_len_comm]],
+                    y_train, epochs=1, batch_size=128)
+    
 
 if __name__ == "__main__":
-    main()
+    #main()
+    multi_input()
+  
