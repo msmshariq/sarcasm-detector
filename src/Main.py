@@ -15,6 +15,7 @@ import random as rn
 rn.seed(2018) 
 
 from TopicExtractor import TopicExtractor
+from ModelBuilder import ModelBuilder
 import Utils
 import pandas as pd
 import numpy as np
@@ -24,9 +25,10 @@ from keras.layers import Embedding, Dense, Input, LSTM, Bidirectional, Activatio
 from keras.layers.merge import concatenate
 from keras.optimizers import SGD, Adam
 from keras.models import Sequential
-
+from keras.callbacks import ModelCheckpoint
 from keras.utils import to_categorical
-
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import f1_score
 
 def load_raw_dataset(file_path):
     all_columns = ["label", "comment", "auth", "subreddit", "score", "ups", 
@@ -58,21 +60,23 @@ def init_test_dataset(file_path):
 def save_to_file(file_path, dataframe):
     dataframe.to_csv(file_path, sep='\t', index=False, header=False)
     
-def test_multi_input_model():
+def test_multi_input_model(modle_path, pr_comm_len, comm_len):
     politics_test = init_test()
     # TODO: fix length
-    en_t_comm = Utils.encode_test_docs(tok, politics_test, 'comment', 257)
-    en_t_pr_comm = Utils.encode_test_docs(tok, politics_test, 'parent_comment', 559)
-    y = np.array(politics_test["label"])
-    y = to_categorical(y ,num_classes = None)
+    en_t_comm = Utils.encode_test_docs(tok, politics_test, 'comment', comm_len)
+    en_t_pr_comm = Utils.encode_test_docs(tok, politics_test, 'parent_comment', pr_comm_len)
+    y_ = np.array(politics_test["label"])
+    y = to_categorical(y_ ,num_classes = None)
     x = np.concatenate((en_t_pr_comm, en_t_comm), axis=1)
     # load model from file
     # TODO: read file name from file
-    multi_input=load_model('multi_model.h5')
+    multi_input=load_model(modle_path)
     loss, accuracy = multi_input.evaluate([x[:, :len_pr_comm], x[:, len_pr_comm:len_pr_comm + len_comm]], y)
+    print('Accuracy: %f' % (accuracy*100))
+    print('Loss: %f' % (loss*100))
     preds = multi_input.predict([x[:, :len_pr_comm], x[:, len_pr_comm:len_pr_comm + len_comm]])
     pred_classes = np.argmax(preds, axis=1)
-    return pred_classes
+    return pred_classes, y_
 
 #####    
 
@@ -195,4 +199,38 @@ def multi_input():
 if __name__ == "__main__":
 #    main()
 #    multi_input()
-    pol_test = init_test_dataset('/home/shariq/MSc/Research/dataset/reddit/pol/test-balanced.csv')
+#    pol_test = init_test_dataset('/home/shariq/MSc/Research/dataset/reddit/pol/test-balanced.csv')
+
+    global vocab_size, embedding_matrix, multi_model, len_comm, len_pr_comm
+    input_politics = initz()
+    pick_col = "all_comments"
+    tok, vocab_size = Utils.init_tokenizer(input_politics[pick_col])
+    
+    len_comm, en_comm = Utils.encode_docs1(tok, input_politics, "comment")
+    len_pr_comm, en_pr_comm = Utils.encode_docs1(tok, input_politics, "parent_comment")
+    
+    embedding_matrix = Utils.create_embeddings(vocab_size, tok)
+    
+    y = np.array(input_politics["label"])
+    x = np.concatenate((en_pr_comm, en_comm), axis=1)
+    y = to_categorical(y ,num_classes = None)
+
+    
+    np.array_equal(en_pr_comm, x[:, :len_pr_comm])
+    np.array_equal(en_comm, x[:, len_pr_comm:len_pr_comm+ len_comm])
+    
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
+    
+    for f in ['sgd', 'rmsprop', 'adam']:
+        builder = ModelBuilder(vocab_size, embedding_matrix=embedding_matrix)
+        model = builder.multi_input_model(pr_len=len_pr_comm, comm_len=len_comm, optimizer=f)
+        filepath = 'model-' + f + '-opt.h5'
+        checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=False, mode='max')
+        callbacks_list = [checkpoint]
+        model.fit([x_train[:, :len_pr_comm], x_train[:, len_pr_comm:len_pr_comm + len_comm]],
+                    y_train, epochs=20, batch_size=128, callbacks=callbacks_list)
+        
+    
+    pred_classes, classes = test_multi_input_model('model-adam-opt.h5', len_pr_comm, len_comm) 
+    confusion_matrix(classes, pred_classes)       
+    f1_score(classes, pred_classes)       
