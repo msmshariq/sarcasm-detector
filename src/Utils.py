@@ -5,19 +5,28 @@
 """
 
 from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 import numpy as np
 
 
 def cleanup_str(docs):
-	# split into tokens by white space
+	# split into tokens 
 	tokens = docs.split()
 	# filter out stop words
 	stop_words = set(stopwords.words('english'))
 	tokens = [w for w in tokens if not w in stop_words]
 	tokens = ' '.join(tokens)
 	return tokens
+
+def lemmatize_str(docs):
+    # split into tokens
+    tokens = docs.split()
+    lemmatizer = WordNetLemmatizer()
+    tokens = [lemmatizer.lemmatize(w) for w in tokens]
+    tokens = ' '.join(tokens)
+    return tokens
 
 def init_tokenizer(docs):
     tokenizer = Tokenizer()
@@ -46,6 +55,13 @@ def encode_docs1(tokenizer, data, column):
     # pad the comments and parent comments using the max_length
     padded_comments = pad_sequences(encoded_comments, maxlen=max_len, padding='post', truncating='post')
     return max_len, padded_comments
+
+def encode_test_docs(tokenizer, data, column, max_len):
+    # tokenize the texts 
+    encoded_comments = tokenizer.texts_to_sequences(data[column]) 
+    # pad the comments and parent comments using the max_length
+    padded_comments = pad_sequences(encoded_comments, maxlen=max_len, padding='post', truncating='post')
+    return padded_comments
  
 def init_glove_embedding():    
     embeddings_index = dict()

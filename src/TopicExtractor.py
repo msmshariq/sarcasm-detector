@@ -34,10 +34,10 @@ class TopicExtractor:
                 counter += 1
                 if (counter % 1000 == 0):
                     log.info("Collected {0} matching records".format(counter))
-                    filtered_data = filtered_data.append({
-                            'label': row['label'],
-                            'comment': row['comment'],
-                            'parent_comment': row['parent_comment']},
+                filtered_data = filtered_data.append({
+                        'label': row['label'],
+                        'comment': row['comment'],
+                        'parent_comment': row['parent_comment']},
                     ignore_index = True)
         return filtered_data
 

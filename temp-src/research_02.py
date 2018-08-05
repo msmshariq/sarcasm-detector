@@ -27,16 +27,16 @@ y = np.array(input_politics["label"])
 t = Tokenizer()
 t.fit_on_texts(input_politics["comment"])
 vocab_size = len(t.word_index) + 1
-print(vocab_size)
+#print(vocab_size)
 
 encoded_docs = t.texts_to_sequences(input_politics["comment"])
-print(encoded_docs)
+#print(encoded_docs)
 type(encoded_docs)
-print len(max(encoded_docs, key=len))
+#print len(max(encoded_docs, key=len))
 
 max_length = len(max(encoded_docs, key=len))
 padded_docs = pad_sequences(encoded_docs, maxlen=max_length, padding='post')
-print(padded_docs)
+#print(padded_docs)
 
 embeddings_index = dict()
 f = open('/home/shariq/MSc/Research/glove.6B/glove.6B.100d.txt')
@@ -54,8 +54,8 @@ for word, i in t.word_index.items():
 	if embedding_vector is not None:
 		embedding_matrix[i] = embedding_vector
         
-print(embedding_matrix[1])
-len(embedding_matrix)
+#print(embedding_matrix[1])
+#len(embedding_matrix)
 
 # test train split
 x_train, x_test, y_train, y_test = train_test_split(padded_docs, y, test_size=0.2, random_state=0)
@@ -250,7 +250,7 @@ from keras.utils.vis_utils import model_to_dot
 
 SVG(model_to_dot(model).create(prog='dot', format='svg'))
 
-model.fit(x_train, y_train, epochs=5, batch_size=16)
+model.fit(x_train, y_train, epochs=5, batch_size=16, shuffle=False)
 # evaluate the model
 loss, accuracy = model.evaluate(x_test, y_test)
 print('Accuracy: %f' % (accuracy*100))
