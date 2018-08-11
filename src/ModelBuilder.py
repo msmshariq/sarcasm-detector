@@ -8,6 +8,7 @@ from keras.models import Model
 from keras.layers import Embedding, Dense, Input, LSTM, Bidirectional, Activation
 from keras.layers.merge import concatenate
 from keras.models import Sequential
+from keras import backend as K
 
 class ModelBuilder:
     
@@ -28,33 +29,31 @@ class ModelBuilder:
         print(model.summary())
         return model 
     
-    def multi_input_model(self, pr_len, comm_len, optimizer = 'adam'):
-        input_parent = Input(shape=(pr_len,))
-        embedding1 = Embedding(self.vocab_size, 100, weights=[self.embedding_matrix], 
-                               input_length=pr_len, trainable=False)(input_parent)
-    #    drop1 = Dropout(0.3)(embedding1)
-    #    bilstm1 = Bidirectional(LSTM(10, return_sequences=True))(embedding1)
-    #    droput = Dropout(0.5)(bilstm1)
-    #    dense1 = Dense(10, activation='sigmoid')(bilstm1)
+    def multi_input_model(self, pr_len, comm_len, optimizer = 'adam', loss='binary_crossentropy'):
+        print('Using optimizer: ' + optimizer)
+        with K.name_scope('input_parent'):
+            input_parent = Input(shape=(pr_len,), name='input_parent')
+            embedding1 = Embedding(self.vocab_size, 100, 
+                                   weights=[self.embedding_matrix], 
+                                   input_length=pr_len, trainable=False, 
+                                   name='embedding_parent')(input_parent)
         
-        input_comment = Input(shape=(comm_len,))
-        embedding2 = Embedding(self.vocab_size, 100, weights=[self.embedding_matrix], 
-                               input_length=comm_len, trainable=False)(input_comment)
-    #    drop2 = Dropout(0.1)(embedding2)
-    #    bilstm2 = Bidirectional(LSTM(10, return_sequences=True))(embedding2)
-    #    dense2 = Dense(10, activation='sigmoid')(bilstm2)
-    
-    #    lstm = Bidirectional(LSTM(20, return_sequences=True))
-    #    en_pr = lstm(drop1)
-    #    en_cm = lstm(drop2)
-            
-        x = concatenate([embedding2, embedding1], axis=1)
-        x = Bidirectional(LSTM(20, return_sequences=True))(x)
-        x = Dense(20, activation='sigmoid')(x)
-        x = Bidirectional(LSTM(20))(x)
-        output = Dense(2, activation='sigmoid')(x)
+        with K.name_scope('input_comment'):
+            input_comment = Input(shape=(comm_len,), name='input_comment')
+            embedding2 = Embedding(self.vocab_size, 100, 
+                                   weights=[self.embedding_matrix], 
+                                   input_length=comm_len, trainable=False, 
+                                   name='embedding_comment')(input_comment)
+        
+        with K.name_scope('main_flow'):
+            x = concatenate([embedding2, embedding1], axis=1, name='concat')
+            x = Bidirectional(LSTM(20, return_sequences=True, name='bilstim_1'))(x)
+            x = Dense(20, activation='sigmoid', name='dense_1')(x)
+            x = Bidirectional(LSTM(20, name='bilstm_2'))(x)
+            output = Dense(2, activation='sigmoid', name='output')(x)
         
         model = Model(inputs=[input_parent, input_comment], outputs=[output])
-        model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics = ['accuracy'])
+        model.compile(loss=loss, optimizer=optimizer, metrics = ['accuracy'])
         print(model.summary())
         return model
+    
