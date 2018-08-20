@@ -6,13 +6,13 @@ Created on Tue Jul 31 12:42:52 2018
 @author: shariq
 """
 import numpy as np
-np.random.seed(2018)
+np.random.seed(1987)
 
 from tensorflow import set_random_seed
-set_random_seed(2018)
+set_random_seed(1987)
 
 import random as rn
-rn.seed(2018) 
+rn.seed(1987) 
 
 from TopicExtractor import TopicExtractor
 from ModelBuilder import ModelBuilder
@@ -23,6 +23,7 @@ from sklearn.model_selection import train_test_split
 from keras.models import load_model
 from keras.callbacks import ModelCheckpoint, TensorBoard, ReduceLROnPlateau
 from keras.utils import to_categorical
+from keras.optimizers import Adam
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import f1_score
 
@@ -37,16 +38,34 @@ def load_filtered_dataset(file_path):
     
 
 def get_politics_data(input):
-    politics_filter = {'types' : "DBpedia:Politician," +
-                   "DBpedia:PoliticalParty," +
-                   "DBpedia:OfficeHolder," +
-                   "DBpedia:PoliticalParty," +
-                   "DBpedia:GovernmentAgency"}
+    politics_filter = {"types" : "DBpedia:Politician," +
+                       "DBpedia:PoliticalParty," +
+                       "DBpedia:OfficeHolder," +
+                       "DBpedia:PoliticalParty," +
+                       "DBpedia:GovernmentAgency"}
 
     col_names=["label", "comment", "parent_comment"]
     politcs_extract = TopicExtractor(confidence=0.0, filter=politics_filter, columns=col_names)
-#    return politcs_extract
     return politcs_extract.filter_dataset(input)
+
+def get_sports_data(input):
+    politics_filter = {"types" : "DBpedia:Sport," + 
+                       "DBpedia:SportsClub," +
+                       "DBpedia:SportsLeague," + 
+                       "DBpedia:SportsTeam," + 
+                       "DBpedia:MotorsportRacer," + 
+                       "DBpedia:WinterSportPlayer," +
+                       "DBpedia:SportsTeamMember," + 
+                       "DBpedia:SportsManager," +
+                       "DBpedia:SportsEvent," + 
+                       "DBpedia:SportFacility," +
+                       "DBpedia:SportCompetitionResult," + 
+                       "DBpedia:SportsSeason"}
+
+    col_names=["label", "comment", "parent_comment"]
+    sports_extract = TopicExtractor(confidence=0.7, filter=politics_filter, columns=col_names)
+#    return politcs_extract
+    return sports_extract.filter_dataset(input)
 
 def init_test_dataset(file_path):
     all_test_data = load_raw_dataset(file_path)
@@ -55,6 +74,14 @@ def init_test_dataset(file_path):
     
 def save_to_file(file_path, dataframe):
     dataframe.to_csv(file_path, sep='\t', index=False, header=False)
+    
+def init_filtered_data(file_path):
+    filtered_data = load_filtered_dataset(file_path)
+    filtered_data["parent_comment"] = filtered_data["parent_comment"].apply(lambda x: Utils.cleanup_str(x))
+    filtered_data["parent_comment"] = filtered_data["parent_comment"].apply(lambda x: Utils.lemmatize_str(x))
+    filtered_data["comment"] = filtered_data["comment"].apply(lambda x: Utils.lemmatize_str(x))
+    filtered_data["all_comments"] = filtered_data["parent_comment"].map(str) + " " + input_politics["comment"]
+    return filtered_data    
     
 def test_multi_input_model(modle_path, pr_comm_len, comm_len):
     politics_test = init_test()
@@ -90,6 +117,8 @@ def initz():
 
 def init_test():
     input_politics_test = load_filtered_dataset("/home/shariq/MSc/Research/dataset/test-politics.csv")
+#    input_politics_test = load_filtered_dataset("/home/shariq/MSc/Research/dataset/reddit/main/train-sports.balanced.csv")
+#    input_politics_test = input_politics_test[7001:10001]
     input_politics_test["parent_comment"] = input_politics_test["parent_comment"].apply(lambda x: Utils.cleanup_str(x))
     input_politics_test["parent_comment"] = input_politics_test["parent_comment"].apply(lambda x: Utils.lemmatize_str(x))
     input_politics_test["comment"] = input_politics_test["comment"].apply(lambda x: Utils.lemmatize_str(x))
@@ -139,29 +168,30 @@ if __name__ == "__main__":
 #                               y_test))
         
     
-    for f in ['rmsprop']:
-        builder = ModelBuilder(vocab_size, embedding_matrix=embedding_matrix)
-        model = builder.multi_input_model(pr_len=len_pr_comm, comm_len=len_comm, optimizer=f)
-#        filepath = 'model-latest-' + f + '-opt.h5'
-        logpath = 'logs-latest-1' + f
-        
-#        checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=False, mode='max')
-        reduce_lr_acc = ReduceLROnPlateau(monitor='val_acc', factor=0.2,
-                              patience=2, min_lr=0.0, verbose=1)
-        reduce_lr_val = ReduceLROnPlateau(monitor='val_loss', factor=0.2,
-                              patience=2, min_lr=0.0, verbose=1)
-        
-#        lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=2, min_lr=0.5e-6)
-#        early_stopper = EarlyStopping(min_delta=0.001, patience=2)
-        tb_callback = TensorBoard(log_dir=logpath, histogram_freq=1, batch_size=128, write_graph=True, 
-                                  write_grads=True, write_images=True, embeddings_freq=0, 
-                                  embeddings_layer_names=None, embeddings_metadata=None, 
-                                  embeddings_data=None)
-        callbacks_list = [reduce_lr_acc, reduce_lr_val, tb_callback]
-        model.fit([x_train[:, :len_pr_comm], x_train[:, len_pr_comm:len_pr_comm + len_comm]],
-                    y_train, epochs=20, batch_size=128, callbacks=callbacks_list,
-                    validation_data=([x_test[:, :len_pr_comm], x_test[:, len_pr_comm:len_pr_comm + len_comm]], 
-                               y_test))
+#    for o in ['adam']:
+#        for l in ['binary_crossentropy']:
+    builder = ModelBuilder(vocab_size, embedding_matrix=embedding_matrix)
+    model = builder.multi_input_conv_model(pr_len=len_pr_comm, comm_len=len_comm, optimizer=Adam(lr=0.01))
+#    filepath = 'conv-model-' + o + '-' + l + '.h5'
+#    logpath = 'final-logs/conv-model-' + o + '-' + l
+            
+#    checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=False, mode='max')
+    reduce_lr_acc = ReduceLROnPlateau(monitor='val_acc', factor=0.2,
+                                  patience=2, min_lr=0.0, verbose=1)
+    reduce_lr_val = ReduceLROnPlateau(monitor='val_loss', factor=0.2,
+                                  patience=2, min_lr=0.0, verbose=1)
+            
+    #        lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=2, min_lr=0.5e-6)
+    #        early_stopper = EarlyStopping(min_delta=0.001, patience=2)
+#    tb_callback = TensorBoard(log_dir=logpath, histogram_freq=1, batch_size=128, write_graph=True, 
+#                                      write_grads=True, write_images=True, embeddings_freq=0, 
+#                                      embeddings_layer_names=None, embeddings_metadata=None, 
+#                                      embeddings_data=None)
+    callbacks_list = [reduce_lr_acc, reduce_lr_val]
+    model.fit([x_train[:, :len_pr_comm], x_train[:, len_pr_comm:len_pr_comm + len_comm]],
+                        y_train, epochs=20, batch_size=128, callbacks=callbacks_list,
+                        validation_data=([x_test[:, :len_pr_comm], x_test[:, len_pr_comm:len_pr_comm + len_comm]], 
+                                   y_test))
         
     
 #    pred_classes, classes = test_multi_input_model('../models/model-rmsprop-opt.h5', len_pr_comm, len_comm) 
@@ -169,18 +199,41 @@ if __name__ == "__main__":
 #    f1_score(classes, pred_classes)      
 #
 #    
-#    politics_test = init_test()
-#    # TODO: fix length
-#    en_t_comm = Utils.encode_test_docs(tok, politics_test, 'comment', len_comm)
-#    en_t_pr_comm = Utils.encode_test_docs(tok, politics_test, 'parent_comment', len_pr_comm)
-#    y_ = np.array(politics_test["label"])
-#    y1 = to_categorical(y_ ,num_classes = None)
-#    x1 = np.concatenate((en_t_pr_comm, en_t_comm), axis=1)
-#    
-#    model.evaluate([x1[:, :len_pr_comm], x1[:, len_pr_comm:len_pr_comm + len_comm]], y1)
+    sports_test = init_test()
+#   TODO: fix length
+    en_t_comm = Utils.encode_test_docs(tok, sports_test, 'comment', len_comm)
+    en_t_pr_comm = Utils.encode_test_docs(tok, sports_test, 'parent_comment', len_pr_comm)
+    y_ = np.array(sports_test["label"])
+    y2 = to_categorical(y_ ,num_classes = None)
+    x2 = np.concatenate((en_t_pr_comm, en_t_comm), axis=1)
+##    
+#    m = load_model('conv-model-adam-binary_crossentropy.h5')
+#    m = load_model('model-adam-binary_crossentropy.h5')
+#
+    model.evaluate([x2[:, :len_pr_comm], x2[:, len_pr_comm:len_pr_comm + len_comm]], y2)
+    
+    preds = model.predict([x2[:, :len_pr_comm], x2[:, len_pr_comm:len_pr_comm + len_comm]])
+    pred_classes = np.argmax(preds, axis=1)
+    confusion_matrix(y_, pred_classes)       
+    f1_score(y_, pred_classes)
+    
+    
+#    x_train, x_test, y_train, y_test = train_test_split(x1, y1, test_size=0.1, random_state=0)
+
+    
+#    new_model.fit([x_train[:, :len_pr_comm], x_train[:, len_pr_comm:len_pr_comm + len_comm]],
+#                   y_train, epochs=20, batch_size=128)
+    
+#    mod.evaluate([x_test[:, :len_pr_comm], x_test[:, len_pr_comm:len_pr_comm + len_comm]], y_test)
+#              
+    
+    
+#    new_model.evaluate([x1[:, :len_pr_comm], x1[:, len_pr_comm:len_pr_comm + len_comm]], y1)
+#    mod.evaluate([x1[:, :len_pr_comm], x1[:, len_pr_comm:len_pr_comm + len_comm]], y1)
 #    
 #    preds = model.predict([x1[:, :len_pr_comm], x1[:, len_pr_comm:len_pr_comm + len_comm]])
 #    pred_classes = np.argmax(preds, axis=1)
 #    confusion_matrix(y_, pred_classes)       
-#    f1_score(y_, pred_classes)   
-
+#    f1_score(y_, pred_classes)
+            
+#    y_classes = keras.np_utils.probas_to_classes(y_proba)
