@@ -27,7 +27,8 @@ class TopicExtractor:
             comments = row["parent_comment"] + " " + row["comment"]
             try:
                 spotlight.annotate(self.spotlight_endpoint, comments,
-                                   confidence = self.confidence, filters = self.filter)
+                                   confidence = self.confidence, 
+                                   filters = self.filter)
             except:
                 sys.exc_clear()
             else:
