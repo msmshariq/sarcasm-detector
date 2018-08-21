@@ -34,33 +34,22 @@ def init_tokenizer(docs):
     vocab_size = len(tokenizer.word_index) + 1
     return tokenizer, vocab_size
 
-def encode_docs(tokenizer, data):
-    # tokenize the texts 
-    encoded_comments = tokenizer.texts_to_sequences(data["comment"]) 
-    encoded_parent_comments = tokenizer.texts_to_sequences(data["parent_comment"]) 
-    # find the max length of comments and parent comments
-    comments_len = len(max(encoded_comments, key=len))
-    parent_comments_len = len(max(encoded_parent_comments, key=len))
-    max_length = comments_len if comments_len > parent_comments_len else parent_comments_len
-    # pad the comments and parent comments using the max_length
-    padded_comments = pad_sequences(encoded_comments, maxlen=max_length, padding='post')
-    padded_parent_comments = pad_sequences(encoded_parent_comments, maxlen=max_length, padding='post')
-    return padded_comments, padded_parent_comments
-
-def encode_docs1(tokenizer, data, column):
+def encode_docs(tokenizer, data, column):
     # tokenize the texts 
     encoded_comments = tokenizer.texts_to_sequences(data[column]) 
     # find the max length of comments and parent comments
     max_len = len(max(encoded_comments, key=len))
     # pad the comments and parent comments using the max_length
-    padded_comments = pad_sequences(encoded_comments, maxlen=max_len, padding='post', truncating='post')
+    padded_comments = pad_sequences(encoded_comments, maxlen=max_len,
+                                    padding='post', truncating='post')
     return max_len, padded_comments
 
 def encode_test_docs(tokenizer, data, column, max_len):
     # tokenize the texts 
     encoded_comments = tokenizer.texts_to_sequences(data[column]) 
     # pad the comments and parent comments using the max_length
-    padded_comments = pad_sequences(encoded_comments, maxlen=max_len, padding='post', truncating='post')
+    padded_comments = pad_sequences(encoded_comments, maxlen=max_len,
+                                    padding='post', truncating='post')
     return padded_comments
  
 def init_glove_embedding():    

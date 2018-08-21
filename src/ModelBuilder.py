@@ -6,7 +6,7 @@
 
 from keras.models import Model
 from keras.layers import Embedding, Dense, Input, LSTM, Bidirectional, Activation
-from keras.layers import Conv1D, MaxPooling1D, Dropout, Flatten
+from keras.layers import Conv1D, MaxPooling1D, Dropout
 from keras.layers.merge import concatenate
 from keras.models import Sequential
 from keras.models import load_model
