@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+   <head>
+      <!-- Required meta tags -->
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <!-- Latest compiled and minified CSS -->
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+      <!-- jQuery library -->
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+      <!-- Latest compiled JavaScript -->
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+      <script type="text/javascript">
+         $(function() {
+           $('#btnSignUp').click(function() {
+
+             $.ajax({
+               url: '/predict',
+               data: $('form').serialize(),
+               type: 'POST',
+               success: function(response) {
+                 $("#result").html(response);
+               },
+               error: function(error) {
+                 console.log(error);
+               }
+             });
+           });
+         });
+      </script>
+      <title>Sarcasm Detector</title>
+   </head>
+   <body>
+      <nav class="navbar navbar-inverse navbar-fixed-top">
+         <div class="container">
+            <div class="navbar-header">
+               <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" 
+               data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+               <span class="sr-only">Toggle navigation</span>
+               <span class="icon-bar"></span>
+               <span class="icon-bar"></span>
+               <span class="icon-bar"></span>
+               </button>
+               <a class="navbar-brand" href="#">Sarcasm Detector!</a>
+            </div>
+            <div id="navbar" class="navbar-collapse collapse">
+               <ul class="nav navbar-nav">
+                  <li class="active"><a href="#">Politics Domain</a></li>
+                  <li><a href="sports.html">Sports Domain</a></li>
+                  <li><a href="#contact">About</a></li>
+               </ul>
+            </div>
+            <!--/.nav-collapse -->
+         </div>
+      </nav>
+      <div class="container" role="main">
+         <div class="jumbotron">
+            <h3>Detect Sarcasm for content on Politics!</h3>
+            <p>This page can be used to predict sarcasm on data related to Politics. 
+            The inputs should correspond to a conversational context.</p>
+            <p>The "Parent Comment" input refers to a part of the conversation that is 
+            supposed to provide contextual information. The "Comment" is the actual content that will be
+            tested for sarcasm.</p>
+         </div>
+         <form id="input-form">
+            <div class="form-group">
+                <label for="parentComment">Parent Comment</label>
+                <input type="text" class="form-control" id="parentComment" name="parentComment" 
+                aria-describedby="parentCommentH" placeholder="Parent Comment">
+                <small id="parentCommentH" class="form-text text-muted">The parent comment of the conversation</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="comment">Comment</label>
+                <input type="text" class="form-control" id="comment" name="comment" placeholder="Comment">
+                <small id="commentlHelp" class="form-text text-muted">Comment, text that is evaluated for Sarcasm</small>
+            </div>
+            
+            <button type="button" id="btnSignUp" class="btn btn-primary">Submit</button>
+         </form>
+         <div id="result"></div>
+      </div>
+   </body>
+</html>

@@ -1,8 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jul 31 12:42:52 2018
-
 @author: shariq
 """
 import numpy as np
@@ -109,21 +107,6 @@ def test_model(modle, x, y):
     pred_classes = np.argmax(preds, axis=1)
     print(confusion_matrix(y, pred_classes))    
     f1_score((y, pred_classes))
-
-
-vocab_size = 0
-max_len = 0 
-
-
-def init_test():
-    input_politics_test = load_filtered_dataset("/home/shariq/MSc/Research/dataset/test-politics.csv")
-#    input_politics_test = load_filtered_dataset("/home/shariq/MSc/Research/dataset/reddit/main/train-sports.balanced.csv")
-#    input_politics_test = input_politics_test[7001:10001]
-    input_politics_test["parent_comment"] = input_politics_test["parent_comment"].apply(lambda x: Utils.cleanup_str(x))
-    input_politics_test["parent_comment"] = input_politics_test["parent_comment"].apply(lambda x: Utils.lemmatize_str(x))
-    input_politics_test["comment"] = input_politics_test["comment"].apply(lambda x: Utils.lemmatize_str(x))
-    input_politics_test["all_comments"] = input_politics_test["parent_comment"].map(str) + " " + input_politics_test["comment"]
-    return input_politics_test
 
 
 if __name__ == "__main__":
