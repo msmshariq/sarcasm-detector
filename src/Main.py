@@ -79,7 +79,7 @@ def init_filtered_data(file_path):
     filtered_data["parent_comment"] = filtered_data["parent_comment"].apply(lambda x: Utils.cleanup_str(x))
     filtered_data["parent_comment"] = filtered_data["parent_comment"].apply(lambda x: Utils.lemmatize_str(x))
     filtered_data["comment"] = filtered_data["comment"].apply(lambda x: Utils.lemmatize_str(x))
-    filtered_data["all_comments"] = filtered_data["parent_comment"].map(str) + " " + input_politics["comment"]
+    filtered_data["all_comments"] = filtered_data["parent_comment"].map(str) + " " + filtered_data["comment"]
     return filtered_data    
 
 def train_model(model, x_data, y_data, epochs, tag):
@@ -156,7 +156,7 @@ if __name__ == "__main__":
 #    f1_score(classes, pred_classes)      
 #
     
-#    sports_test = init_test()
+#    sports_test = init_filtered_data("/home/shariq/MSc/Research/dataset/test-politics.csv")
 #    en_t_comm = Utils.encode_test_docs(tok, sports_test, 'comment', len_comm)
 #    en_t_pr_comm = Utils.encode_test_docs(tok, sports_test, 'parent_comment', len_pr_comm)
 #    y_ = np.array(sports_test["label"])

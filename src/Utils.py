@@ -46,9 +46,9 @@ def encode_docs(tokenizer, data, column):
 
 def encode_test_docs(tokenizer, data, column, max_len):
     # tokenize the texts 
-    encoded_comments = tokenizer.texts_to_sequences(data[column]) 
+    encoded_text = tokenizer.texts_to_sequences(data[column]) 
     # pad the comments and parent comments using the max_length
-    padded_comments = pad_sequences(encoded_comments, maxlen=max_len,
+    padded_comments = pad_sequences(encoded_text, maxlen=max_len,
                                     padding='post', truncating='post')
     return padded_comments
  

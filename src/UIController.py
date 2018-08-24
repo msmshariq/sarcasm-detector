@@ -4,21 +4,53 @@
 @author: shariq
 """
 
+import Main
+import Utils
+import numpy as np
+from keras.models import load_model
+from keras.preprocessing.sequence import pad_sequences
 from flask import Flask, render_template, request
+
 app = Flask(__name__)
  
+# Use the politics data to initilize the tokenizer
+input_politics = Main.init_filtered_data("/home/shariq/MSc/Research/dataset/train-politics.csv")
+tok, vocab_size = Utils.init_tokenizer(input_politics["all_comments"])
+len_comm = 257
+len_pr_comm = 559
+
+model_politics = load_model('../models/model-adam-opt.h5')
+
 
 @app.route('/')
-def showSignUp():
+def index():
     return render_template('index.html')
 
 @app.route('/predict', methods=['POST'])
-def signUp():
+def predict_politics():
     print('In backend')
     parentComment = request.form['parentComment']
     comment = request.form['comment']
-    print(parentComment)
-    return parentComment + "-" + comment 
+    
+    encoded_pr_comm = tok.texts_to_sequences([parentComment]) 
+    paded_pr_comm = pad_sequences(encoded_pr_comm, maxlen=len_pr_comm,
+                                    padding='post', truncating='post')
+    
+    encoded_comm = tok.texts_to_sequences([comment]) 
+    paded_comm = pad_sequences(encoded_comm, maxlen=len_comm,
+                                    padding='post', truncating='post')
+     
+    x = np.concatenate((paded_pr_comm, paded_comm), axis=1)
+    
+    preds = model_politics.predict([x[:, :len_pr_comm], x[:, len_pr_comm:len_pr_comm + len_comm]])
+    print(preds)
+    pred_class = np.argmax(preds, axis=1)
+    
+    if pred_class[0] == 1:
+        return "Sarcastic!"
+    elif pred_class[0] == 0:
+        return "Not Sarcastic"
+    
  
 if __name__ == "__main__":
     app.run()
