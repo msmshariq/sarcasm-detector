@@ -82,21 +82,27 @@ def init_filtered_data(file_path):
     filtered_data["all_comments"] = filtered_data["parent_comment"].map(str) + " " + filtered_data["comment"]
     return filtered_data    
 
-def train_model(model, x_data, y_data, epochs, tag):
-    x_train, x_test, y_train, y_test = train_test_split(x_data, y_data, test_size=0.2, random_state=0)
+def train_model(model, x_data, y_data, epochs, tag='tagx'):
+    # split the data as traing / test data
+    x_train, x_test, y_train, y_test = train_test_split(x_data, y_data, 
+                                                        test_size=0.2, random_state=0)
     
     # define callbacks used during the training
     tb_callback = TensorBoard(log_dir="./logs/model-{}".format(tag), histogram_freq=1, 
                               batch_size=128, write_graph=True, write_grads=True, write_images=True)
+    
     reduce_lr = ReduceLROnPlateau(monitor='val_acc', factor=0.2, patience=2, min_lr=0.0, verbose=1)
+    
     checkpoint = ModelCheckpoint("models/model-{}.h5".format(tag), 
                                  monitor="val_acc", verbose=1, save_best_only=False, mode="max")
+    
     callbacks_list = [tb_callback, reduce_lr, checkpoint]
     
     # train the model
     model.fit([x_train[:, :len_pr_comm], x_train[:, len_pr_comm:len_pr_comm + len_comm]], y_train, 
               epochs=epochs, batch_size=128, callbacks=callbacks_list, 
-              validation_data=([x_test[:, :len_pr_comm],x_test[:, len_pr_comm:len_pr_comm + len_comm]], y_test))
+              validation_data=([x_test[:, :len_pr_comm],
+                                x_test[:, len_pr_comm:len_pr_comm + len_comm]], y_test))
     
     
 def test_model(modle, x, y):

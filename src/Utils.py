@@ -10,7 +10,6 @@ from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 import numpy as np
 
-
 def cleanup_str(docs):
 	# split into tokens 
 	tokens = docs.split()
@@ -36,21 +35,21 @@ def init_tokenizer(docs):
 
 def encode_docs(tokenizer, data, column):
     # tokenize the texts 
-    encoded_comments = tokenizer.texts_to_sequences(data[column]) 
+    encoded_text = tokenizer.texts_to_sequences(data[column]) 
     # find the max length of comments and parent comments
-    max_len = len(max(encoded_comments, key=len))
+    max_len = len(max(encoded_text, key=len))
     # pad the comments and parent comments using the max_length
-    padded_comments = pad_sequences(encoded_comments, maxlen=max_len,
+    padded_text = pad_sequences(encoded_text, maxlen=max_len,
                                     padding='post', truncating='post')
-    return max_len, padded_comments
+    return max_len, padded_text
 
 def encode_test_docs(tokenizer, data, column, max_len):
     # tokenize the texts 
     encoded_text = tokenizer.texts_to_sequences(data[column]) 
     # pad the comments and parent comments using the max_length
-    padded_comments = pad_sequences(encoded_text, maxlen=max_len,
+    padded_text = pad_sequences(encoded_text, maxlen=max_len,
                                     padding='post', truncating='post')
-    return padded_comments
+    return padded_text
  
 def init_glove_embedding():    
     embeddings_index = dict()
