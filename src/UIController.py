@@ -19,8 +19,8 @@ tok, vocab_size = Utils.init_tokenizer(input_politics["all_comments"])
 len_comm = 257
 len_pr_comm = 559
 
-model_politics = load_model('../models/model-adam-opt.h5')
-
+model1 = load_model('../models/model-adam-opt.h5')
+model2 = load_model('../models/model-rmsprop-opt.h5')
 
 @app.route('/')
 def index():
@@ -28,12 +28,9 @@ def index():
 
 @app.route('/predict', methods=['POST'])
 def predict_politics():
-    print('In backend')
     parentComment = request.form['parentComment']
     comment = request.form['comment']
     model_select = request.form['sel-model']
-    
-    print(model_select)
     
     encoded_pr_comm = tok.texts_to_sequences([parentComment]) 
     paded_pr_comm = pad_sequences(encoded_pr_comm, maxlen=len_pr_comm,
@@ -45,7 +42,11 @@ def predict_politics():
      
     x = np.concatenate((paded_pr_comm, paded_comm), axis=1)
     
-    preds = model_politics.predict([x[:, :len_pr_comm], x[:, len_pr_comm:len_pr_comm + len_comm]])
+    if model_select == 'Model-1':
+        preds = model1.predict([x[:, :len_pr_comm], x[:, len_pr_comm:len_pr_comm + len_comm]])
+    elif model_select == 'Model-2':
+        preds = model2.predict([x[:, :len_pr_comm], x[:, len_pr_comm:len_pr_comm + len_comm]])
+        
     print(preds)
     pred_class = np.argmax(preds, axis=1)
     
@@ -54,6 +55,5 @@ def predict_politics():
     elif pred_class[0] == 0:
         return "Not Sarcastic"
     
- 
 if __name__ == "__main__":
     app.run(host='0.0.0.0')
