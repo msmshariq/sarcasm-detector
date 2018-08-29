@@ -127,17 +127,18 @@ if __name__ == "__main__":
     
     embedding_matrix = Utils.create_embeddings(vocab_size, tok)
     
+    global model 
     if choice == "train":
         y = np.array(input_politics["label"])
         y = to_categorical(y ,num_classes = None)
         x = np.concatenate((en_pr_comm_len, en_comm_len), axis=1)
         
-        for opt in ["adam", "rmsprop"]:
-            for loss in ["binary_crossentropy", "mse"]:
-                path = opt + "-" + loss
-                builder = ModelBuilder(vocab_size = vocab_size, embedding_matrix = embedding_matrix)
-                model = builder.multi_input_model(len_pr_comm, len_comm, optimizer=opt, loss=loss)
-                train_model(model, x, y, 20)
+        opt = "adam"
+        loss = "binary_crossentropy"
+        path = opt + "-" + loss
+        builder = ModelBuilder(vocab_size = vocab_size, embedding_matrix = embedding_matrix)
+        model = builder.multi_input_model(len_pr_comm, len_comm, optimizer=opt, loss=loss)
+        train_model(model, x, y, 20)
 
     
 #    np.array_equal(en_pr_comm, x[:, :len_pr_comm])
@@ -146,11 +147,11 @@ if __name__ == "__main__":
     if choice == "test":
         politics_test = init_filtered_data("/home/shariq/MSc/Research/dataset/test-politics.csv")
         y_ = np.array(politics_test["label"])
-        y = to_categorical(y_ ,num_classes = None)
+        y1 = to_categorical(y_ ,num_classes = None)
         
-        en_test_comm = Utils.encode_test_docs(tok, politics_test, 'comment', en_comm_len)
-        en_test_pr_comm = Utils.encode_test_docs(tok, politics_test, 'parent_comment', en_pr_comm_len)
-        x = np.concatenate((en_test_pr_comm, en_test_comm), axis=1)
+        en_test_comm = Utils.encode_test_docs(tok, politics_test, 'comment', len_comm)
+        en_test_pr_comm = Utils.encode_test_docs(tok, politics_test, 'parent_comment', len_pr_comm)
+        x1 = np.concatenate((en_test_pr_comm, en_test_comm), axis=1)
 
 
 
