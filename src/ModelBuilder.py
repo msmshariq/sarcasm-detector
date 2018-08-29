@@ -101,12 +101,12 @@ class ModelBuilder:
         model.layers.pop()
         model.layers.pop()
         
+        # make the remaining layers non-trainable
         for l in model.layers:
             l.trainable = False
         
         x = model.layers[-1].output
         print(x.name)
-#        x = Bidirectional(LSTM(20, return_sequences=True, name='tl_bilstm_1'), name='bi_1')(x)
         x = Dense(20, activation='sigmoid', name='tl_dense_1')(x)
         x = Bidirectional(LSTM(20, name='tl_bilstm_2'), name='bi_2')(x)
         output = Dense(2, activation='sigmoid', name='tl_output')(x)

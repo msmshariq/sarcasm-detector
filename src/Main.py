@@ -44,7 +44,9 @@ def get_politics_data(input):
                        "DBpedia:GovernmentAgency"}
 
     col_names=["label", "comment", "parent_comment"]
-    politcs_extract = TopicExtractor(confidence=0.0, filter=politics_filter, columns=col_names)
+    politcs_extract = TopicExtractor(confidence=0.5, 
+                                     filter=politics_filter, 
+                                     columns=col_names)
     return politcs_extract.filter_dataset(input)
 
 def get_sports_data(input):
@@ -62,8 +64,9 @@ def get_sports_data(input):
                        "DBpedia:SportsSeason"}
 
     col_names=["label", "comment", "parent_comment"]
-    sports_extract = TopicExtractor(confidence=0.7, filter=politics_filter, columns=col_names)
-#    return politcs_extract
+    sports_extract = TopicExtractor(confidence=0.7, 
+                                    filter=politics_filter, 
+                                    columns=col_names)
     return sports_extract.filter_dataset(input)
 
 def init_test_dataset(file_path):
