@@ -31,6 +31,9 @@ def predict_politics():
     print('In backend')
     parentComment = request.form['parentComment']
     comment = request.form['comment']
+    model_select = request.form['sel-model']
+    
+    print(model_select)
     
     encoded_pr_comm = tok.texts_to_sequences([parentComment]) 
     paded_pr_comm = pad_sequences(encoded_pr_comm, maxlen=len_pr_comm,
@@ -53,4 +56,4 @@ def predict_politics():
     
  
 if __name__ == "__main__":
-    app.run()
+    app.run(host='0.0.0.0')
