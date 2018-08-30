@@ -78,12 +78,12 @@ def save_to_file(file_path, dataframe):
     dataframe.to_csv(file_path, sep='\t', index=False, header=False)
     
 def init_filtered_data(file_path):
-    filtered_data = load_filtered_dataset(file_path)
-    filtered_data["parent_comment"] = filtered_data["parent_comment"].apply(lambda x: Utils.cleanup_str(x))
-    filtered_data["parent_comment"] = filtered_data["parent_comment"].apply(lambda x: Utils.lemmatize_str(x))
-    filtered_data["comment"] = filtered_data["comment"].apply(lambda x: Utils.lemmatize_str(x))
-    filtered_data["all_comments"] = filtered_data["parent_comment"].map(str) + " " + filtered_data["comment"]
-    return filtered_data    
+    data = load_filtered_dataset(file_path)
+    data["parent_comment"] = data["parent_comment"].apply(lambda x: Utils.cleanup_str(x))
+    data["parent_comment"] = data["parent_comment"].apply(lambda x: Utils.lemmatize_str(x))
+    data["comment"] = data["comment"].apply(lambda x: Utils.lemmatize_str(x))
+    data["all_comments"] = data["parent_comment"].map(str) + " " + data["comment"]
+    return data    
 
 def train_model(model, x_data, y_data, epochs, tag='tagx'):
     # split the data as traing / test data
@@ -109,10 +109,12 @@ def train_model(model, x_data, y_data, epochs, tag='tagx'):
     
     
 def test_model(modle, x, y):
-    loss, accuracy = model.evaluate([x[:, :len_pr_comm], x[:, len_pr_comm:len_pr_comm + len_comm]], y)
+    loss, accuracy = model.evaluate([x[:, :len_pr_comm], 
+                                     x[:, len_pr_comm:len_pr_comm + len_comm]], y)
     print('Accuracy: %f' % (accuracy*100))
     print('Loss: %f' % (loss*100))
-    preds = model.predict([x[:, :len_pr_comm], x[:, len_pr_comm:len_pr_comm + len_comm]])
+    preds = model.predict([x[:, :len_pr_comm], 
+                           x[:, len_pr_comm:len_pr_comm + len_comm]])
     pred_classes = np.argmax(preds, axis=1)
     print(confusion_matrix(y, pred_classes))    
     f1_score((y, pred_classes))
@@ -130,7 +132,6 @@ if __name__ == "__main__":
     
     embedding_matrix = Utils.create_embeddings(vocab_size, tok)
     
-    global model 
     if choice == "train":
         y = np.array(input_politics["label"])
         y = to_categorical(y ,num_classes = None)
@@ -143,10 +144,6 @@ if __name__ == "__main__":
         model = builder.multi_input_model(len_pr_comm, len_comm, optimizer=opt, loss=loss)
         train_model(model, x, y, 20)
 
-    
-#    np.array_equal(en_pr_comm, x[:, :len_pr_comm])
-#    np.array_equal(en_comm, x[:, len_pr_comm:len_pr_comm+ len_comm])
-   
     if choice == "test":
         politics_test = init_filtered_data("/home/shariq/MSc/Research/dataset/test-politics.csv")
         y_ = np.array(politics_test["label"])
@@ -155,48 +152,10 @@ if __name__ == "__main__":
         en_test_comm = Utils.encode_test_docs(tok, politics_test, 'comment', len_comm)
         en_test_pr_comm = Utils.encode_test_docs(tok, politics_test, 'parent_comment', len_pr_comm)
         x1 = np.concatenate((en_test_pr_comm, en_test_comm), axis=1)
-
-
-
         
-#   ******************************************************S 
-    
-#    pred_classes, classes = test_multi_input_model('../models/model-rmsprop-opt.h5', len_pr_comm, len_comm) 
-#    confusion_matrix(classes, pred_classes)       
-#    f1_score(classes, pred_classes)      
-#
-    
-#    sports_test = init_filtered_data("/home/shariq/MSc/Research/dataset/test-politics.csv")
-#    en_t_comm = Utils.encode_test_docs(tok, sports_test, 'comment', len_comm)
-#    en_t_pr_comm = Utils.encode_test_docs(tok, sports_test, 'parent_comment', len_pr_comm)
-#    y_ = np.array(sports_test["label"])
-#    y2 = to_categorical(y_ ,num_classes = None)
-#    x2 = np.concatenate((en_t_pr_comm, en_t_comm), axis=1)
-#
-#    model.evaluate([x2[:, :len_pr_comm], x2[:, len_pr_comm:len_pr_comm + len_comm]], y2)
-#    
-#    preds = model.predict([x2[:, :len_pr_comm], x2[:, len_pr_comm:len_pr_comm + len_comm]])
-#    pred_classes = np.argmax(preds, axis=1)
-#    confusion_matrix(y_, pred_classes)       
-#    f1_score(y_, pred_classes)
-    
-    
-#    x_train, x_test, y_train, y_test = train_test_split(x1, y1, test_size=0.1, random_state=0)
+        model = load_model('../models/model-adam-opt.h5')
+        test_model(model, x1, y1)
 
-    
-#    new_model.fit([x_train[:, :len_pr_comm], x_train[:, len_pr_comm:len_pr_comm + len_comm]],
-#                   y_train, epochs=20, batch_size=128)
-    
-#    mod.evaluate([x_test[:, :len_pr_comm], x_test[:, len_pr_comm:len_pr_comm + len_comm]], y_test)
-#              
-    
-    
-#    new_model.evaluate([x1[:, :len_pr_comm], x1[:, len_pr_comm:len_pr_comm + len_comm]], y1)
-#    mod.evaluate([x1[:, :len_pr_comm], x1[:, len_pr_comm:len_pr_comm + len_comm]], y1)
-#    
-#    preds = model.predict([x1[:, :len_pr_comm], x1[:, len_pr_comm:len_pr_comm + len_comm]])
-#    pred_classes = np.argmax(preds, axis=1)
-#    confusion_matrix(y_, pred_classes)       
-#    f1_score(y_, pred_classes)
-            
-#    y_classes = keras.np_utils.probas_to_classes(y_proba)
+#    np.array_equal(en_pr_comm, x[:, :len_pr_comm])
+#    np.array_equal(en_comm, x[:, len_pr_comm:len_pr_comm+ len_comm])
+        
